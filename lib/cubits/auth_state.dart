@@ -37,3 +37,13 @@ class AuthFailure extends AuthState {
 }
 
 class AuthLoggedOut extends AuthState {}
+
+class AuthProfileUpdated extends AuthState {
+  final User user;
+  const AuthProfileUpdated(this.user);
+
+  @override
+  List<Object?> get props => [user];
+}
+
+class AuthPasswordReset extends AuthState {}

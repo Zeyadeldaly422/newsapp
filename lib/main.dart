@@ -2,72 +2,67 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:news_app/cubits/auth_cubit.dart';
 import 'package:news_app/cubits/auth_state.dart';
+import 'package:news_app/cubits/news_cubit.dart';
 import 'package:news_app/views/home_screen.dart';
 import 'package:news_app/views/login_screen.dart';
 import 'package:news_app/services/local_auth_service.dart';
+import 'package:news_app/services/news_service.dart';
+import 'package:news_app/repositories/news_repository.dart';
 import 'package:news_app/utils/app_colors.dart';
+import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  runApp(MyApp(prefs: prefs));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final SharedPreferences prefs;
+  const MyApp({super.key, required this.prefs});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AuthCubit(LocalAuthService())..checkAuthStatus(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => AuthCubit(LocalAuthService())..checkAuthStatus(),
+        ),
+        BlocProvider(
+          create: (context) => NewsCubit(
+            NewsRepository(
+              NewsService(
+                Dio(),
+                apiKey: 'YOUR_API_KEY_HERE', // Replace with secure API key
+                prefs: prefs,
+              ),
+              prefs: prefs,
+            ),
+          )..fetchTopHeadlines('us'),
+        ),
+      ],
       child: MaterialApp(
         title: 'News App',
-        debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primaryColor: AppColors.primary,
-          scaffoldBackgroundColor: AppColors.background,
-          fontFamily: 'Urbanist',
-          appBarTheme: const AppBarTheme(
-            elevation: 0,
-            iconTheme: IconThemeData(color: AppColors.darkGrey),
-            titleTextStyle: TextStyle(
-              color: AppColors.primaryText,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          primarySwatch: AppColors.primaryMaterialColor,
+          brightness: Brightness.light,
         ),
-        home: const AuthWrapper(),
+        darkTheme: ThemeData(
+          primarySwatch: AppColors.primaryMaterialColor,
+          brightness: Brightness.dark,
+        ),
+        home: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            if (state is AuthSuccess) {
+              return HomeScreen(user: state.user);
+            } else if (state is AuthLoggedOut) {
+              return const LoginScreen();
+            }
+            return const Center(child: CircularProgressIndicator());
+          },
+        ),
       ),
-    );
-  }
-}
-
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AuthCubit, AuthState>(
-      builder: (context, state) {
-        if (state is AuthSuccess) {
-          return HomeScreen(user: state.user);
-        } else {
-          return const LoginScreen();
-        }
-      },
     );
   }
 }

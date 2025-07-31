@@ -9,6 +9,8 @@ class User extends Equatable {
   final String? salt;
   final DateTime createdAt;
   final DateTime? lastLoginAt;
+  final String? avatarUrl;
+  final List<String>? favoriteCategories;
 
   const User({
     required this.id,
@@ -19,6 +21,8 @@ class User extends Equatable {
     this.salt,
     required this.createdAt,
     this.lastLoginAt,
+    this.avatarUrl,
+    this.favoriteCategories,
   });
 
   @override
@@ -34,6 +38,8 @@ class User extends Equatable {
       'salt': salt,
       'createdAt': createdAt.toIso8601String(),
       'lastLoginAt': lastLoginAt?.toIso8601String(),
+      'avatarUrl': avatarUrl,
+      'favoriteCategories': favoriteCategories,
     };
   }
 
@@ -49,6 +55,36 @@ class User extends Equatable {
       lastLoginAt: map['lastLoginAt'] != null
           ? DateTime.parse(map['lastLoginAt'])
           : null,
+      avatarUrl: map['avatarUrl'],
+      favoriteCategories: map['favoriteCategories'] != null
+          ? List<String>.from(map['favoriteCategories'])
+          : null,
+    );
+  }
+
+  User copyWith({
+    String? id,
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? passwordHash,
+    String? salt,
+    DateTime? createdAt,
+    DateTime? lastLoginAt,
+    String? avatarUrl,
+    List<String>? favoriteCategories,
+  }) {
+    return User(
+      id: id ?? this.id,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      email: email ?? this.email,
+      passwordHash: passwordHash ?? this.passwordHash,
+      salt: salt ?? this.salt,
+      createdAt: createdAt ?? this.createdAt,
+      lastLoginAt: lastLoginAt ?? this.lastLoginAt,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      favoriteCategories: favoriteCategories ?? this.favoriteCategories,
     );
   }
 }

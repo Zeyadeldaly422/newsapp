@@ -1,13 +1,26 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color.fromARGB(255, 1, 20, 50); // Deep Blue
-  static const Color accent = Color(0xFF4CAF50); // Green
-  static const Color background = Color(0xFFF5F5F5); // Light Grey
-  static const Color primaryText = Color(0xFF212121);
-  static const Color secondaryText = Color(0xFF757575);
-  static const Color error = Color(0xFFD32F2F);
-  static const Color success = Color(0xFF388E3C);
-  static const Color lightGrey = Color(0xFFBDBDBD);
-  static const Color darkGrey = Color(0xFF616161);
+  static const primary = Color(0xFF1976D2);
+  static const primaryMaterialColor = MaterialColor(
+    0xFF1976D2,
+    <int, Color>{
+      50: Color(0xFFE3F2FD),
+      100: Color(0xFFBBDEFB),
+      200: Color(0xFF90CAF9),
+      300: Color(0xFF64B5F6),
+      400: Color(0xFF42A5F5),
+      500: Color(0xFF1976D2),
+      600: Color(0xFF1565C0),
+      700: Color(0xFF0D47A1),
+      800: Color(0xFF0D47A1),
+      900: Color(0xFF0D47A1),
+    },
+  );
+  static const secondaryText = Color(0xFF757575);
+  static const error = Color(0xFFD32F2F);
+
+  static var primaryText;
+
+  static var success;
 }

@@ -6,8 +6,6 @@ import 'package:news_app/views/home_screen.dart';
 import 'package:news_app/views/register_screen.dart';
 import 'package:news_app/views/forgot_password_screen.dart';
 import 'package:news_app/utils/app_colors.dart';
-import 'package:news_app/utils/validation_utils.dart';
-import 'package:news_app/widgets/custom_text_form_field.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordVisible = false;
 
   void _submitLogin() {
-    if (_formKey.currentState?.validate() ?? false) {
+    if (_formKey.currentState!.validate()) {
       context.read<AuthCubit>().login(
             _emailController.text.trim(),
             _passwordController.text.trim(),
@@ -112,7 +110,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             hintText: 'Enter your email',
                             keyboardType: TextInputType.emailAddress,
                             prefixIcon: Icons.email_outlined,
-                            validator: ValidationUtils.validateEmail,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) return 'Email is required';
+                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                                return 'Enter a valid email';
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 20),
                           CustomTextFormField(
@@ -182,8 +186,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
                           Container(
-                            width: MediaQuery.of(context).size.width * 0.7, // تقليص العرض إلى 70%
-                            padding: const EdgeInsets.all(8.0), // تقليل padding الداخلي
+                            width: MediaQuery.of(context).size.width * 0.7,
+                            padding: const EdgeInsets.all(8.0),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(10.0),
@@ -198,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       "No account?",
                                       style: TextStyle(
                                         color: AppColors.secondaryText,
-                                        fontSize: 11, // تقليل الحجم أكثر
+                                        fontSize: 11,
                                       ),
                                     ),
                                     TextButton(
@@ -212,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         style: TextStyle(
                                           color: AppColors.primary,
                                           fontWeight: FontWeight.w700,
-                                          fontSize: 14, // تقليل الحجم
+                                          fontSize: 14,
                                         ),
                                       ),
                                     ),
@@ -229,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     style: TextStyle(
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.w700,
-                                      fontSize: 13, // تقليل الحجم
+                                      fontSize: 13,
                                     ),
                                   ),
                                 ),
@@ -246,6 +250,46 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class CustomTextFormField extends StatelessWidget {
+  final TextEditingController controller;
+  final String labelText;
+  final String hintText;
+  final TextInputType? keyboardType;
+  final IconData prefixIcon;
+  final String? Function(String?) validator;
+  final bool obscureText;
+  final Widget? suffixIcon;
+
+  const CustomTextFormField({
+    super.key,
+    required this.controller,
+    required this.labelText,
+    required this.hintText,
+    this.keyboardType,
+    required this.prefixIcon,
+    required this.validator,
+    this.obscureText = false,
+    this.suffixIcon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        prefixIcon: Icon(prefixIcon),
+        suffixIcon: suffixIcon,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      validator: validator,
     );
   }
 }

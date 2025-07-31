@@ -51,5 +51,41 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  void resetPassword(String trim) {}
+  Future<void> updateUserProfile(Map<String, dynamic> userData) async {
+    emit(AuthLoading());
+    try {
+      final updatedUser = await _authService.updateUserProfile(userData);
+      if (updatedUser != null) {
+        emit(AuthProfileUpdated(updatedUser));
+      } else {
+        emit(const AuthFailure('Failed to update profile.'));
+      }
+    } catch (e) {
+      emit(AuthFailure(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    emit(AuthLoading());
+    try {
+      final user = await _authService.changePassword(currentPassword, newPassword);
+      if (user != null) {
+        emit(AuthSuccess(user));
+      } else {
+        emit(const AuthFailure('Failed to change password.'));
+      }
+    } catch (e) {
+      emit(AuthFailure(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  Future<void> resetPassword(String email) async {
+    emit(AuthLoading());
+    try {
+      await _authService.resetPassword(email);
+      emit(AuthPasswordReset());
+    } catch (e) {
+      emit(AuthFailure(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
 }

@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:news_app/cubits/auth_cubit.dart';
 import 'package:news_app/cubits/auth_state.dart';
+import 'package:news_app/views/login_screen.dart';
 import 'package:news_app/utils/app_colors.dart';
-import 'package:news_app/utils/validation_utils.dart';
-import 'package:news_app/widgets/custom_text_form_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,18 +19,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _dateOfBirthController = TextEditingController();
+  bool _isPasswordVisible = false;
 
   void _submitRegister() {
-    if (_formKey.currentState?.validate() ?? false) {
-      final userData = {
-        'firstName': _firstNameController.text.trim(),
-        'lastName': _lastNameController.text.trim(),
-        'dateOfBirth': _dateOfBirthController.text.trim(),
-        'email': _emailController.text.trim(),
-        'password': _passwordController.text.trim(),
-      };
-      context.read<AuthCubit>().register(userData);
+    if (_formKey.currentState!.validate()) {
+      if (_passwordController.text == _confirmPasswordController.text) {
+        final userData = {
+          'firstName': _firstNameController.text.trim(),
+          'lastName': _lastNameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'password': _passwordController.text.trim(),
+        };
+        context.read<AuthCubit>().register(userData);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Passwords do not match.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -39,7 +46,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
-    _dateOfBirthController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -61,13 +67,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         listener: (context, state) {
           if (state is AuthRegistered) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Registration successful! Please login.'),
+              SnackBar(
+                content: const Text('Registration successful! Please login.'),
                 backgroundColor: AppColors.success,
                 behavior: SnackBarBehavior.floating,
               ),
             );
-            Navigator.of(context).pop();
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+            );
           } else if (state is AuthFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -81,19 +89,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 30.0),
               child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                elevation: 6,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(color: Colors.grey.shade200, width: 1),
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: const EdgeInsets.all(30.0),
                   child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
+                        Text(
                           'Join Us!',
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -102,64 +113,83 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             color: AppColors.primaryText,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         const Text(
                           'Create your account',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 19,
+                            fontSize: 18,
                             color: AppColors.secondaryText,
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 30),
                         CustomTextFormField(
                           controller: _firstNameController,
                           labelText: 'First Name',
                           hintText: 'Enter your first name',
                           prefixIcon: Icons.person_outline,
-                          validator: ValidationUtils.validateName,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'First name is required';
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 20),
                         CustomTextFormField(
                           controller: _lastNameController,
                           labelText: 'Last Name',
                           hintText: 'Enter your last name',
                           prefixIcon: Icons.person_outline,
-                          validator: ValidationUtils.validateName,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Last name is required';
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 18),
-                        CustomTextFormField(
-                          controller: _dateOfBirthController,
-                          labelText: 'Date of Birth',
-                          hintText: 'YYYY-MM-DD',
-                          keyboardType: TextInputType.datetime,
-                          prefixIcon: Icons.calendar_today,
-                          validator: ValidationUtils.validateDateOfBirth,
-                        ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 20),
                         CustomTextFormField(
                           controller: _emailController,
                           labelText: 'Email',
                           hintText: 'Enter your email',
                           keyboardType: TextInputType.emailAddress,
                           prefixIcon: Icons.email_outlined,
-                          validator: ValidationUtils.validateEmail,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Email is required';
+                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                              return 'Enter a valid email';
+                            }
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 20),
                         CustomTextFormField(
                           controller: _passwordController,
                           labelText: 'Password',
                           hintText: 'Enter a strong password',
-                          obscureText: true,
+                          obscureText: !_isPasswordVisible,
                           prefixIcon: Icons.lock_outline,
-                          validator: ValidationUtils.validatePassword,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Password is required';
+                            if (value.length < 6) return 'Password must be at least 6 characters';
+                            return null;
+                          },
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                              color: const Color.fromARGB(255, 120, 9, 9),
+                              size: 24.0,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                          ),
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 20),
                         CustomTextFormField(
                           controller: _confirmPasswordController,
                           labelText: 'Confirm Password',
                           hintText: 'Re-enter your password',
-                          obscureText: true,
+                          obscureText: !_isPasswordVisible,
                           prefixIcon: Icons.lock_outline,
                           validator: (value) {
                             if (value != _passwordController.text) {
@@ -168,22 +198,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 40),
                         BlocBuilder<AuthCubit, AuthState>(
                           builder: (context, state) {
                             return ElevatedButton(
                               onPressed: state is AuthLoading ? null : _submitRegister,
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                backgroundColor: const Color.fromARGB(255, 72, 56, 119),
-                                foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                backgroundColor: const Color.fromARGB(255, 46, 8, 135),
+                                foregroundColor: const Color.fromARGB(255, 238, 237, 241),
+                                minimumSize: const Size(double.infinity, 50),
                               ),
                               child: state is AuthLoading
-                                  ? const CircularProgressIndicator(color: Color.fromARGB(255, 255, 255, 255))
+                                  ? const CircularProgressIndicator(color: Colors.white)
                                   : const Text(
                                       'Register',
-                                      style: TextStyle(fontSize: 16),
+                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                                     ),
                             );
                           },
@@ -197,6 +228,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class CustomTextFormField extends StatelessWidget {
+  final TextEditingController controller;
+  final String labelText;
+  final String hintText;
+  final TextInputType? keyboardType;
+  final IconData prefixIcon;
+  final String? Function(String?) validator;
+  final bool obscureText;
+  final Widget? suffixIcon;
+
+  const CustomTextFormField({
+    super.key,
+    required this.controller,
+    required this.labelText,
+    required this.hintText,
+    this.keyboardType,
+    required this.prefixIcon,
+    required this.validator,
+    this.obscureText = false,
+    this.suffixIcon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        prefixIcon: Icon(prefixIcon),
+        suffixIcon: suffixIcon,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      validator: validator,
     );
   }
 }

@@ -62,6 +62,7 @@ class LocalAuthService {
 
     users.add(newUser);
     await _saveUsers(users);
+    await _prefs.setString(_currentUserKey, newUser.id);
     return newUser;
   }
 
@@ -99,4 +100,64 @@ class LocalAuthService {
       return null;
     }
   }
+
+  Future<User?> updateUserProfile(Map<String, dynamic> userData) async {
+    final users = await _getUsers();
+    final userId = (await _prefs).getString(_currentUserKey);
+    if (userId == null) throw Exception('No user logged in');
+
+    final index = users.indexWhere((user) => user.id == userId);
+    if (index == -1) throw Exception('User not found');
+
+    final currentUser = users[index];
+    final updatedUser = currentUser.copyWith(
+      firstName: userData['firstName'] ?? currentUser.firstName,
+      lastName: userData['lastName'] ?? currentUser.lastName,
+      email: userData['email'] ?? currentUser.email,
+    );
+
+    users[index] = updatedUser;
+    await _saveUsers(users);
+    return updatedUser;
+  }
+
+  Future<User?> changePassword(String currentPassword, String newPassword) async {
+    final users = await _getUsers();
+    final userId = (await _prefs).getString(_currentUserKey);
+    if (userId == null) throw Exception('No user logged in');
+
+    final index = users.indexWhere((user) => user.id == userId);
+    if (index == -1) throw Exception('User not found');
+
+    final currentUser = users[index];
+    final currentPasswordHash = _hashPassword(currentPassword, currentUser.salt!);
+    if (currentPasswordHash != currentUser.passwordHash) {
+      throw Exception('Current password is incorrect');
+    }
+
+    final newSalt = _generateSalt();
+    final newPasswordHash = _hashPassword(newPassword, newSalt);
+    final updatedUser = currentUser.copyWith(
+      passwordHash: newPasswordHash,
+      salt: newSalt,
+    );
+
+    users[index] = updatedUser;
+    await _saveUsers(users);
+    return updatedUser;
+  }
+
+  Future<void> resetPassword(String email) async {
+    final users = await _getUsers();
+    final user = users.firstWhere(
+      (user) => user.email == email,
+      orElse: () => throw Exception('User not found'),
+    );
+    // Simulate sending reset link (requires backend for real implementation)
+    print('Password reset link sent to ${user.email}');
+  }
+}
+
+extension on Future<SharedPreferences> {
+  Future<void> setString(String currentUserKey, String id) async {}
 }

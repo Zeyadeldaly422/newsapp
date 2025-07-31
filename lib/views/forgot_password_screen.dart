@@ -3,8 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:news_app/cubits/auth_cubit.dart';
 import 'package:news_app/cubits/auth_state.dart';
 import 'package:news_app/utils/app_colors.dart';
-import 'package:news_app/utils/validation_utils.dart';
-import 'package:news_app/widgets/custom_text_form_field.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -18,7 +16,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
 
   void _submitResetPassword() {
-    if (_formKey.currentState?.validate() ?? false) {
+    if (_formKey.currentState!.validate()) {
       context.read<AuthCubit>().resetPassword(_emailController.text.trim());
     }
   }
@@ -44,8 +42,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         listener: (context, state) {
           if (state is AuthPasswordReset) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Password reset email sent. Check your inbox.'),
+              SnackBar(
+                content: const Text('Password reset email sent. Check your inbox.'),
                 backgroundColor: AppColors.success,
                 behavior: SnackBarBehavior.floating,
               ),
@@ -79,7 +77,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
+                        Text(
                           'Reset Your Password',
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -104,7 +102,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           hintText: 'Enter your email',
                           keyboardType: TextInputType.emailAddress,
                           prefixIcon: Icons.email_outlined,
-                          validator: ValidationUtils.validateEmail,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Email is required';
+                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                              return 'Enter a valid email';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 40),
                         BlocBuilder<AuthCubit, AuthState>(
@@ -140,5 +144,42 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 }
 
-mixin AuthPasswordReset {
+class CustomTextFormField extends StatelessWidget {
+  final TextEditingController controller;
+  final String labelText;
+  final String hintText;
+  final TextInputType? keyboardType;
+  final IconData prefixIcon;
+  final String? Function(String?) validator;
+  final bool obscureText;
+  final Widget? suffixIcon;
+
+  const CustomTextFormField({
+    super.key,
+    required this.controller,
+    required this.labelText,
+    required this.hintText,
+    this.keyboardType,
+    required this.prefixIcon,
+    required this.validator,
+    this.obscureText = false,
+    this.suffixIcon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        prefixIcon: Icon(prefixIcon),
+        suffixIcon: suffixIcon,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      validator: validator,
+    );
+  }
 }
